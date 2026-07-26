@@ -1,0 +1,18 @@
+{
+  "name": "PLANN — Planification Festival",
+  "short_name": "PLANN",
+  "description": "Plateforme de planification pour festivals",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#18181b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

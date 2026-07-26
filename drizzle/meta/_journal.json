@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1784049441000,
+      "tag": "0000_strong_firestar",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1784049784224,
+      "tag": "0001_quiet_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1784052779372,
+      "tag": "0002_mighty_mindworm",
+      "breakpoints": true
+    }
+  ]
+}
