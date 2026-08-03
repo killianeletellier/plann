@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CrudFormDialog } from "@/components/ui/crud-form-dialog";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { useToast } from "@/components/ui/toast-provider";
+import { CsvImportDialog } from "@/components/forms/CsvImportDialog";
+import { PinRevealButton } from "@/components/forms/PinRevealButton";
 import { UserForm } from "@/components/forms/UserForm";
 
 interface User {
@@ -22,6 +24,7 @@ export default function BenevolesPage() {
   const { toast } = useToast();
   const [items, setItems] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<User | null>(null);
 
   const load = useCallback(async () => {
@@ -68,10 +71,20 @@ export default function BenevolesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Bénévoles</h2>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Ajouter
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowImport(true)}>
+            <Upload className="h-4 w-4 mr-1" /> Import CSV
+          </Button>
+          <Button onClick={() => { setEditing(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4 mr-1" /> Ajouter
+          </Button>
+        </div>
       </div>
+      <CsvImportDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        onImported={load}
+      />
       <CrudFormDialog
         open={showForm}
         onOpenChange={(open) => {
@@ -100,6 +113,10 @@ export default function BenevolesPage() {
               </div>
             </div>
             <div className="flex gap-2 shrink-0">
+              <PinRevealButton
+                userId={item.id}
+                userName={`${item.firstName} ${item.lastName}`}
+              />
               <Button variant="outline" size="icon" onClick={() => { setEditing(item); setShowForm(true); }}>
                 <Pencil className="h-4 w-4" />
               </Button>

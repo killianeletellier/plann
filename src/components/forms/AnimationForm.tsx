@@ -17,6 +17,8 @@ import { useToast } from "@/components/ui/toast-provider";
 import type { VolunteerAssignment } from "@/lib/volunteer-display";
 import { ArtistSelectionGrid } from "./ArtistSelectionGrid";
 import { VolunteerAssignmentEditor } from "./VolunteerAssignmentEditor";
+import { ColorPicker } from "./ColorPicker";
+import { defaultMissionColor } from "@/lib/mission-color";
 
 interface Option {
   id: string;
@@ -31,6 +33,7 @@ interface AnimationFormProps {
     volunteers?: VolunteerAssignment[];
     startAt?: string;
     endAt?: string;
+    color?: string;
   };
   locations: Option[];
   artists: Option[];
@@ -67,6 +70,7 @@ export function AnimationForm({
     volunteers: initial?.volunteers || [] as VolunteerAssignment[],
     startAt: toLocalDatetime(initial?.startAt),
     endAt: toLocalDatetime(initial?.endAt),
+    color: initial?.color || "",
   });
 
   useEffect(() => {
@@ -78,10 +82,6 @@ export function AnimationForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.artistId && form.volunteers.length === 0) {
-      toast({ type: "error", message: "Au moins un artiste ou un bénévole est requis" });
-      return;
-    }
     setLoading(true);
     try {
       await onSubmit({
@@ -91,6 +91,7 @@ export function AnimationForm({
         volunteers: form.volunteers,
         startAt: new Date(form.startAt).toISOString(),
         endAt: new Date(form.endAt).toISOString(),
+        color: form.color || defaultMissionColor(form.title),
       });
     } catch {
       toast({ type: "error", message: "Erreur lors de l'enregistrement" });
@@ -130,7 +131,8 @@ export function AnimationForm({
       <div>
         <Label>Bénévoles</Label>
         <p className="mt-1 mb-2 text-xs text-zinc-500">
-          Au moins un artiste ou un bénévole est requis. Définissez un rôle pour chaque bénévole.
+          Optionnel en phase d&apos;organisation. Les animations sans bénévole ni artiste seront
+          mises en évidence.
         </p>
         <VolunteerAssignmentEditor
           volunteers={volunteers}
@@ -149,6 +151,11 @@ export function AnimationForm({
           <Input id="endAt" type="datetime-local" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} required />
         </div>
       </div>
+      <ColorPicker
+        value={form.color}
+        onChange={(color) => setForm({ ...form, color })}
+        defaultFromName={form.title}
+      />
       <div className="flex flex-wrap gap-2">
         <SubmitButton loading={loading} />
         {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Annuler</Button>}

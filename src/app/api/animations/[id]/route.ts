@@ -46,6 +46,7 @@ export async function PUT(request: Request, { params }: Params) {
       artistId: data.artistId || null,
       startAt: data.startAt,
       endAt: data.endAt,
+      ...(data.color !== undefined ? { color: data.color } : {}),
     })
     .where(and(eq(animations.id, id), eq(animations.festivalId, session!.festivalId)));
 

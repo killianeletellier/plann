@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-import { hashPin } from "../auth/hash";
+import { preparePinForStorage } from "../auth/pin-store";
 import { db } from "./client";
 import {
   animationVolunteers,
@@ -50,6 +50,11 @@ export async function seedDatabase() {
   const adminId = uuidv4();
   const volunteerIds = [uuidv4(), uuidv4(), uuidv4()];
 
+  const adminPin = await preparePinForStorage("1234");
+  const pin1111 = await preparePinForStorage("1111");
+  const pin2222 = await preparePinForStorage("2222");
+  const pin3333 = await preparePinForStorage("3333");
+
   await db.insert(users).values([
     {
       id: adminId,
@@ -57,7 +62,8 @@ export async function seedDatabase() {
       firstName: "Admin",
       lastName: "C15",
       phone: "0600000000",
-      pinHash: await hashPin("1234"),
+      pinHash: adminPin.pinHash,
+      pinEncrypted: adminPin.pinEncrypted,
       isAdmin: true,
     },
     {
@@ -66,7 +72,8 @@ export async function seedDatabase() {
       firstName: "Marie",
       lastName: "Dupont",
       phone: "0611111111",
-      pinHash: await hashPin("1111"),
+      pinHash: pin1111.pinHash,
+      pinEncrypted: pin1111.pinEncrypted,
       isAdmin: false,
     },
     {
@@ -75,7 +82,8 @@ export async function seedDatabase() {
       firstName: "Pierre",
       lastName: "Martin",
       phone: "0622222222",
-      pinHash: await hashPin("2222"),
+      pinHash: pin2222.pinHash,
+      pinEncrypted: pin2222.pinEncrypted,
       isAdmin: false,
     },
     {
@@ -84,7 +92,8 @@ export async function seedDatabase() {
       firstName: "Sophie",
       lastName: "Bernard",
       phone: "0633333333",
-      pinHash: await hashPin("3333"),
+      pinHash: pin3333.pinHash,
+      pinEncrypted: pin3333.pinEncrypted,
       isAdmin: false,
     },
   ]);
@@ -191,6 +200,7 @@ export async function seedDatabase() {
     title: "Concert Les Échos",
     startAt: "2026-07-11T20:00:00.000Z",
     endAt: "2026-07-11T22:00:00.000Z",
+    color: "#9333EA",
   });
 
   await db.insert(animationVolunteers).values({
@@ -209,6 +219,7 @@ export async function seedDatabase() {
     description: "Poser les panneaux directionnels",
     startAt: "2026-07-10T08:00:00.000Z",
     endAt: "2026-07-10T12:00:00.000Z",
+    color: "#059669",
   });
 
   await db.insert(taskVolunteers).values([
@@ -232,6 +243,7 @@ export async function seedDatabase() {
     locationId: locationIds.bar,
     title: "Service bar",
     description: "Service et encaissement au bar",
+    color: "#3B82F6",
   });
 
   const slotIds = [uuidv4(), uuidv4()];

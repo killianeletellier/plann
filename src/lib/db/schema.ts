@@ -26,6 +26,7 @@ export const users = sqliteTable("users", {
   lastName: text("last_name").notNull(),
   phone: text("phone"),
   pinHash: text("pin_hash").notNull(),
+  pinEncrypted: text("pin_encrypted"),
   isAdmin: integer("is_admin", { mode: "boolean" }).notNull().default(false),
 });
 
@@ -69,6 +70,7 @@ export const animations = sqliteTable("animations", {
   title: text("title").notNull(),
   startAt: text("start_at").notNull(),
   endAt: text("end_at").notNull(),
+  color: text("color").notNull().default("#9333EA"),
 });
 
 export const animationVolunteers = sqliteTable("animation_volunteers", {
@@ -94,6 +96,12 @@ export const tasks = sqliteTable("tasks", {
   description: text("description"),
   startAt: text("start_at").notNull(),
   endAt: text("end_at").notNull(),
+  status: text("status", {
+    enum: ["a_faire", "en_cours", "fait"],
+  })
+    .notNull()
+    .default("a_faire"),
+  color: text("color").notNull().default("#059669"),
 });
 
 export const taskVolunteers = sqliteTable("task_volunteers", {
@@ -117,6 +125,7 @@ export const posts = sqliteTable("posts", {
     .references(() => locations.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
+  color: text("color").notNull().default("#3B82F6"),
 });
 
 export const slots = sqliteTable("slots", {

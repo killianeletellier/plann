@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, GanttChart, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CrudFormDialog } from "@/components/ui/crud-form-dialog";
@@ -13,6 +14,7 @@ import { useToast } from "@/components/ui/toast-provider";
 import { PostForm, SlotGenerator } from "@/components/forms/PostForm";
 import { VolunteerAssignmentEditor } from "@/components/forms/VolunteerAssignmentEditor";
 import type { VolunteerAssignment } from "@/lib/volunteer-display";
+import { isSlotUnassigned, UNASSIGNED_HIGHLIGHT_CLASS } from "@/lib/unassigned";
 import { STABLE_OVERLAY } from "@/lib/ui-stable";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +22,8 @@ interface Post {
   id: string;
   title: string;
   description: string | null;
+  color?: string;
+  locationId?: string;
   location?: { name: string };
   slots?: Array<{
     id: string;
@@ -44,7 +48,6 @@ export default function PostesPage() {
   const [editing, setEditing] = useState<Post | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [savingSlotId, setSavingSlotId] = useState<string | null>(null);
-
   const load = useCallback(async () => {
     const [postRes, locRes, userRes, roleRes] = await Promise.all([
       fetch("/api/posts"),
@@ -151,9 +154,16 @@ export default function PostesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Postes</h2>
-        <Button onClick={() => { setEditing(null); setShowForm(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Ajouter
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/gantt?mode=location" title="Vue Gantt">
+              <GanttChart className="h-4 w-4 mr-1" /> Gantt
+            </Link>
+          </Button>
+          <Button onClick={() => { setEditing(null); setShowForm(true); }}>
+            <Plus className="h-4 w-4 mr-1" /> Ajouter
+          </Button>
+        </div>
       </div>
       <CrudFormDialog
         open={showForm}
@@ -169,6 +179,8 @@ export default function PostesPage() {
           initial={editing ? {
             title: editing.title,
             description: editing.description || undefined,
+            locationId: editing.locationId,
+            color: editing.color,
           } : undefined}
           locations={locations}
           onSubmit={handleSubmit}
@@ -209,8 +221,12 @@ export default function PostesPage() {
                       role: v.role ?? null,
                     }));
                     const isSaving = savingSlotId === slot.id;
+                    const unassigned = isSlotUnassigned(slot.volunteers);
                     return (
-                      <div key={slot.id} className="relative rounded-lg border bg-white p-3 text-sm space-y-2 min-h-[8rem]">
+                      <div key={slot.id} className={cn(
+                        "relative rounded-lg border p-3 text-sm space-y-2 min-h-[8rem]",
+                        unassigned ? UNASSIGNED_HIGHLIGHT_CLASS : "bg-white",
+                      )}>
                         {isSaving && (
                           <div className={cn(STABLE_OVERLAY, "rounded-lg")}>
                             <Spinner className="h-5 w-5 text-zinc-600" />
@@ -221,9 +237,12 @@ export default function PostesPage() {
                             {format(parseISO(slot.startAt), "dd/MM HH:mm", { locale: fr })} —{" "}
                             {format(parseISO(slot.endAt), "HH:mm", { locale: fr })}
                           </span>
-                          <Button variant="ghost" size="icon" onClick={() => deleteSlot(slot.id)} disabled={isSaving}>
+                          <div className="flex items-center gap-2">
+                            {unassigned && <Badge variant="warning">Sans bénévole</Badge>}
+                            <Button variant="ghost" size="icon" onClick={() => deleteSlot(slot.id)} disabled={isSaving}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <p className="text-xs font-medium text-zinc-700">Bénévoles</p>

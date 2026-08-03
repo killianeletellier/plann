@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { requireSession, requireAdmin } from "@/lib/api-helpers";
-import { hashPin } from "@/lib/auth/hash";
+import { preparePinForStorage } from "@/lib/auth/pin-store";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { withoutPinHash } from "@/lib/user-sanitize";
@@ -33,13 +33,15 @@ export async function POST(request: Request) {
   }
 
   const id = uuidv4();
+  const { pinHash, pinEncrypted } = await preparePinForStorage(parsed.data.pin);
   await db.insert(users).values({
     id,
     festivalId: session!.festivalId,
     firstName: parsed.data.firstName,
     lastName: parsed.data.lastName,
     phone: parsed.data.phone,
-    pinHash: await hashPin(parsed.data.pin),
+    pinHash,
+    pinEncrypted,
     isAdmin: parsed.data.isAdmin,
   });
 

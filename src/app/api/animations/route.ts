@@ -6,6 +6,7 @@ import { mapAnimationVolunteerInserts } from "@/lib/api-volunteers";
 import { db } from "@/lib/db/client";
 import { animationVolunteers, animations } from "@/lib/db/schema";
 import { animationSchema } from "@/lib/validations";
+import { defaultMissionColor } from "@/lib/mission-color";
 
 export async function GET() {
   const { session, error } = await requireSession();
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
 
   const id = uuidv4();
   const { volunteers, ...data } = parsed.data;
+  const color = data.color ?? defaultMissionColor(data.title);
 
   await db.insert(animations).values({
     id,
@@ -43,6 +45,7 @@ export async function POST(request: Request) {
     artistId: data.artistId || null,
     startAt: data.startAt,
     endAt: data.endAt,
+    color,
   });
 
   if (volunteers?.length) {

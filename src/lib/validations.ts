@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { TASK_STATUSES } from "@/lib/task-status";
+import { hexColorSchema } from "@/lib/mission-color";
 
 export const loginSchema = z.object({
   festivalCode: z.string().min(1, "Code festival requis"),
@@ -38,40 +40,36 @@ export const volunteerAssignmentSchema = z.object({
   role: z.string().optional().nullable(),
 });
 
-export const animationSchema = z
-  .object({
-    title: z.string().min(1, "Titre requis"),
-    locationId: z.string().min(1, "Lieu requis"),
-    artistId: z.string().optional().nullable(),
-    volunteers: z.array(volunteerAssignmentSchema).optional(),
-    startAt: z.string().min(1, "Date de début requise"),
-    endAt: z.string().min(1, "Date de fin requise"),
-  })
-  .refine(
-    (data) => {
-      const hasArtist = !!data.artistId;
-      const hasVolunteers = data.volunteers && data.volunteers.length > 0;
-      return hasArtist || hasVolunteers;
-    },
-    {
-      message: "Au moins un artiste ou un bénévole est requis",
-      path: ["volunteers"],
-    },
-  );
+export const animationSchema = z.object({
+  title: z.string().min(1, "Titre requis"),
+  locationId: z.string().min(1, "Lieu requis"),
+  artistId: z.string().optional().nullable(),
+  volunteers: z.array(volunteerAssignmentSchema).optional(),
+  startAt: z.string().min(1, "Date de début requise"),
+  endAt: z.string().min(1, "Date de fin requise"),
+  color: hexColorSchema.optional(),
+});
 
 export const taskSchema = z.object({
   title: z.string().min(1, "Titre requis"),
   description: z.string().optional(),
-  volunteers: z.array(volunteerAssignmentSchema).min(1, "Au moins un bénévole requis"),
+  volunteers: z.array(volunteerAssignmentSchema).optional(),
   locationId: z.string().optional().nullable(),
   startAt: z.string().min(1, "Date de début requise"),
   endAt: z.string().min(1, "Date de fin requise"),
+  status: z.enum(TASK_STATUSES).optional(),
+  color: hexColorSchema.optional(),
+});
+
+export const taskStatusSchema = z.object({
+  status: z.enum(TASK_STATUSES),
 });
 
 export const postSchema = z.object({
   title: z.string().min(1, "Titre requis"),
   description: z.string().optional(),
   locationId: z.string().min(1, "Lieu requis"),
+  color: hexColorSchema.optional(),
 });
 
 export const slotSchema = z.object({

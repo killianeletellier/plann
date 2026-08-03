@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Calendar,
   Download,
+  GanttChart,
   LayoutDashboard,
   MapPin,
   Music,
@@ -26,6 +27,7 @@ async function handleLogout() {
 const navItems = [
   { href: "/admin", label: "Carte", icon: LayoutDashboard },
   { href: "/admin/planning", label: "Planning", icon: Calendar },
+  { href: "/admin/gantt", label: "Gantt", icon: GanttChart },
   { href: "/admin/lieux", label: "Lieux", icon: MapPin },
   { href: "/admin/benevoles", label: "Bénévoles", icon: Users },
   { href: "/admin/roles", label: "Rôles", icon: UserCog },
@@ -46,7 +48,7 @@ export function AdminSidebar() {
       </div>
       <nav className="flex-1 p-2 space-y-1">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+          const active = pathname === href || (href === "/admin/taches" && pathname.startsWith("/admin/taches"));
           return (
             <Link
               key={href}
@@ -83,7 +85,7 @@ export function AdminMobileNav() {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white">
       <div className="flex justify-around">
         {mobileItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+          const active = pathname === href || (href === "/admin/taches" && pathname.startsWith("/admin/taches"));
           return (
             <Link
               key={href}

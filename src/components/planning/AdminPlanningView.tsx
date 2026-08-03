@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { format, isPast, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
+import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,14 @@ import {
 import { usePlanningFilterParams } from "@/components/planning/usePlanningFilterParams";
 import { STABLE_EVENT_LIST } from "@/lib/ui-stable";
 import { formatVolunteers } from "@/lib/volunteer-display";
+import {
+  isAnimationUnassigned,
+  isSlotUnassigned,
+  isTaskUnassigned,
+  UNASSIGNED_HIGHLIGHT_CLASS,
+} from "@/lib/unassigned";
+import { getTaskRowHighlightClass, isTaskOverdue } from "@/lib/task-overdue";
+import type { TaskStatus } from "@/lib/task-status";
 import { cn } from "@/lib/utils";
 
 const typeLabels: Record<string, string> = {
@@ -80,6 +89,7 @@ function AdminPlanningContent() {
           locationId: a.locationId ?? a.location?.id,
           people,
           volunteerIds,
+          unassigned: isAnimationUnassigned(a.volunteers, a.artistId),
         });
       }
 
@@ -98,6 +108,8 @@ function AdminPlanningContent() {
           locationId: t.locationId ?? t.location?.id,
           people,
           volunteerIds,
+          unassigned: isTaskUnassigned(t.volunteers),
+          overdue: isTaskOverdue(t.endAt, t.status as TaskStatus),
         });
       }
 
@@ -116,6 +128,7 @@ function AdminPlanningContent() {
           locationId: s.post?.locationId ?? s.post?.location?.id,
           people,
           volunteerIds,
+          unassigned: isSlotUnassigned(s.volunteers),
         });
       }
 
@@ -209,12 +222,27 @@ function AdminPlanningContent() {
                     key={e.id}
                     className={cn(
                       "min-h-[5.5rem]",
+                      e.type === "task"
+                        ? getTaskRowHighlightClass({
+                            overdue: e.overdue,
+                            unassigned: e.unassigned,
+                          })
+                        : e.unassigned && UNASSIGNED_HIGHLIGHT_CLASS,
                       showPastEvents && isPast(parseISO(e.endAt)) && "opacity-60",
                     )}
                   >
                     <CardHeader className="py-3">
                       <CardTitle className="flex items-center justify-between text-sm">
-                        <span>{e.title}</span>
+                        <span className="flex items-center gap-2">
+                          {e.title}
+                          {e.overdue && (
+                            <Badge variant="danger" className="gap-1">
+                              <AlertCircle className="h-3 w-3" />
+                              En retard
+                            </Badge>
+                          )}
+                          {e.unassigned && <Badge variant="warning">Sans bénévole</Badge>}
+                        </span>
                         <Badge variant="info">{typeLabels[e.type]}</Badge>
                       </CardTitle>
                     </CardHeader>
@@ -225,7 +253,11 @@ function AdminPlanningContent() {
                         {e.location && ` · ${e.location}`}
                       </p>
                       <p className="mt-1 min-h-[1.25rem]">
-                        {e.people && e.people.length > 0 ? e.people.join(", ") : "\u00A0"}
+                        {e.people && e.people.length > 0
+                          ? e.people.join(", ")
+                          : e.unassigned
+                            ? "Aucun bénévole assigné"
+                            : "\u00A0"}
                       </p>
                     </CardContent>
                   </Card>

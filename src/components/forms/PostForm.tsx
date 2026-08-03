@@ -15,6 +15,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useToast } from "@/components/ui/toast-provider";
+import { ColorPicker } from "@/components/forms/ColorPicker";
+import { defaultMissionColor } from "@/lib/mission-color";
 import { WEEK_DAYS } from "@/lib/dates";
 
 interface Option {
@@ -23,7 +25,7 @@ interface Option {
 }
 
 interface PostFormProps {
-  initial?: { title?: string; description?: string | null; locationId?: string };
+  initial?: { title?: string; description?: string | null; locationId?: string; color?: string };
   locations: Option[];
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   onCancel?: () => void;
@@ -43,13 +45,17 @@ export function PostForm({
     title: initial?.title || "",
     description: initial?.description || "",
     locationId: initial?.locationId || "",
+    color: initial?.color || "",
   });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      await onSubmit(form);
+      await onSubmit({
+        ...form,
+        color: form.color || defaultMissionColor(form.title),
+      });
     } catch {
       toast({ type: "error", message: "Erreur lors de l'enregistrement" });
     } finally {
@@ -78,6 +84,11 @@ export function PostForm({
           </SelectContent>
         </Select>
       </div>
+      <ColorPicker
+        value={form.color}
+        onChange={(color) => setForm({ ...form, color })}
+        defaultFromName={form.title}
+      />
       <div className="flex flex-wrap gap-2">
         <SubmitButton loading={loading} />
         {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Annuler</Button>}

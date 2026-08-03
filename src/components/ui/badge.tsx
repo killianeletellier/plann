@@ -13,6 +13,7 @@ const badgeVariants = cva(
         info: "bg-blue-100 text-blue-800",
         scene: "bg-purple-100 text-purple-800",
         vente: "bg-amber-100 text-amber-800",
+        danger: "bg-red-100 text-red-800",
       },
     },
     defaultVariants: {

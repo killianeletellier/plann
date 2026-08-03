@@ -11,12 +11,16 @@ import { useConfirm } from "@/components/ui/confirm-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { AnimationForm } from "@/components/forms/AnimationForm";
 import { formatVolunteers } from "@/lib/volunteer-display";
+import { isAnimationUnassigned, UNASSIGNED_HIGHLIGHT_CLASS } from "@/lib/unassigned";
+import { cn } from "@/lib/utils";
 
 interface Animation {
   id: string;
   title: string;
+  color?: string;
   startAt: string;
   endAt: string;
+  artistId?: string | null;
   location?: { name: string };
   artist?: { name: string } | null;
   volunteers?: Array<{
@@ -125,6 +129,7 @@ export default function AnimationsPage() {
             })) || [],
             startAt: editing.startAt,
             endAt: editing.endAt,
+            color: editing.color,
           } : undefined}
           locations={locations}
           artists={artists}
@@ -134,11 +139,19 @@ export default function AnimationsPage() {
         />
       </CrudFormDialog>
       <div className="space-y-2">
-        {items.map((item) => (
-          <div key={item.id} className="rounded-lg border border-zinc-200 bg-white p-4 min-h-[5rem]">
+        {items.map((item) => {
+          const unassigned = isAnimationUnassigned(item.volunteers, item.artistId);
+          return (
+          <div key={item.id} className={cn(
+            "rounded-lg border p-4 min-h-[5rem]",
+            unassigned ? UNASSIGNED_HIGHLIGHT_CLASS : "border-zinc-200 bg-white",
+          )}>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-medium">{item.title}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-medium">{item.title}</p>
+                  {unassigned && <Badge variant="warning">Sans bénévole</Badge>}
+                </div>
                 <p className="text-sm text-zinc-500 mt-1">
                   {format(parseISO(item.startAt), "dd/MM HH:mm", { locale: fr })} —{" "}
                   {format(parseISO(item.endAt), "HH:mm", { locale: fr })}
@@ -160,7 +173,8 @@ export default function AnimationsPage() {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

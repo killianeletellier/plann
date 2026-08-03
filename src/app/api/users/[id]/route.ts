@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { requireSession, requireAdmin } from "@/lib/api-helpers";
-import { hashPin } from "@/lib/auth/hash";
+import { preparePinForStorage } from "@/lib/auth/pin-store";
 import { db } from "@/lib/db/client";
 import { users } from "@/lib/db/schema";
 import { withoutPinHash } from "@/lib/user-sanitize";
@@ -39,7 +39,9 @@ export async function PUT(request: Request, { params }: Params) {
     isAdmin: parsed.data.isAdmin,
   };
   if (parsed.data.pin) {
-    updateData.pinHash = await hashPin(parsed.data.pin);
+    const stored = await preparePinForStorage(parsed.data.pin);
+    updateData.pinHash = stored.pinHash;
+    updateData.pinEncrypted = stored.pinEncrypted;
   }
 
   await db

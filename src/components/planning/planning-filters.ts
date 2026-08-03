@@ -13,6 +13,8 @@ export interface PlanningEvent {
   volunteerIds?: string[];
   isActive?: boolean;
   isPast?: boolean;
+  unassigned?: boolean;
+  overdue?: boolean;
 }
 
 export interface FilterItem {

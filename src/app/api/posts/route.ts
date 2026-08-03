@@ -5,6 +5,7 @@ import { requireSession, requireAdmin } from "@/lib/api-helpers";
 import { db } from "@/lib/db/client";
 import { posts } from "@/lib/db/schema";
 import { withSortedSlots } from "@/lib/dates";
+import { defaultMissionColor } from "@/lib/mission-color";
 import { postSchema } from "@/lib/validations";
 
 export async function GET() {
@@ -29,10 +30,12 @@ export async function POST(request: Request) {
   }
 
   const id = uuidv4();
+  const color = parsed.data.color ?? defaultMissionColor(parsed.data.title);
   await db.insert(posts).values({
     id,
     festivalId: session!.festivalId,
     ...parsed.data,
+    color,
   });
 
   const created = await db.query.posts.findFirst({

@@ -16,7 +16,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useToast } from "@/components/ui/toast-provider";
 import type { VolunteerAssignment } from "@/lib/volunteer-display";
+import {
+  TASK_STATUSES,
+  TASK_STATUS_LABELS,
+  type TaskStatus,
+} from "@/lib/task-status";
 import { VolunteerAssignmentEditor } from "./VolunteerAssignmentEditor";
+import { ColorPicker } from "./ColorPicker";
+import { defaultMissionColor } from "@/lib/mission-color";
 
 interface Option {
   id: string;
@@ -31,6 +38,8 @@ interface TaskFormProps {
     locationId?: string | null;
     startAt?: string;
     endAt?: string;
+    status?: TaskStatus;
+    color?: string;
   };
   volunteers: Option[];
   locations: Option[];
@@ -65,6 +74,8 @@ export function TaskForm({
     locationId: initial?.locationId || "",
     startAt: toLocalDatetime(initial?.startAt),
     endAt: toLocalDatetime(initial?.endAt),
+    status: initial?.status ?? "a_faire",
+    color: initial?.color || "",
   });
 
   useEffect(() => {
@@ -76,10 +87,6 @@ export function TaskForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.volunteers.length === 0) {
-      toast({ type: "error", message: "Au moins un bénévole est requis" });
-      return;
-    }
     setLoading(true);
     try {
       await onSubmit({
@@ -89,6 +96,8 @@ export function TaskForm({
         locationId: form.locationId || null,
         startAt: new Date(form.startAt).toISOString(),
         endAt: new Date(form.endAt).toISOString(),
+        status: form.status,
+        color: form.color || defaultMissionColor(form.title),
       });
     } catch {
       toast({ type: "error", message: "Erreur lors de l'enregistrement" });
@@ -110,7 +119,8 @@ export function TaskForm({
       <div>
         <Label>Bénévoles</Label>
         <p className="mt-1 mb-2 text-xs text-zinc-500">
-          Au moins un bénévole est requis. Définissez un rôle pour chaque bénévole sélectionné.
+          Optionnel en phase d&apos;organisation. Les tâches sans bénévole seront mises en
+          évidence.
         </p>
         <VolunteerAssignmentEditor
           volunteers={volunteers}
@@ -131,6 +141,17 @@ export function TaskForm({
           </SelectContent>
         </Select>
       </div>
+      <div>
+        <Label>Statut</Label>
+        <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TaskStatus })}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {TASK_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>{TASK_STATUS_LABELS[s]}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
       <div className="grid grid-cols-1 gap-4">
         <div className="min-w-0">
           <Label htmlFor="startAt">Début</Label>
@@ -141,6 +162,11 @@ export function TaskForm({
           <Input id="endAt" type="datetime-local" value={form.endAt} onChange={(e) => setForm({ ...form, endAt: e.target.value })} required />
         </div>
       </div>
+      <ColorPicker
+        value={form.color}
+        onChange={(color) => setForm({ ...form, color })}
+        defaultFromName={form.title}
+      />
       <div className="flex flex-wrap gap-2">
         <SubmitButton loading={loading} />
         {onCancel && <Button type="button" variant="outline" onClick={onCancel}>Annuler</Button>}

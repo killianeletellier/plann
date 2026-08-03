@@ -4,6 +4,7 @@ import { requireSession, requireAdmin } from "@/lib/api-helpers";
 import { mapTaskVolunteerInserts } from "@/lib/api-volunteers";
 import { db } from "@/lib/db/client";
 import { taskVolunteers, tasks } from "@/lib/db/schema";
+import { withTaskOverdue } from "@/lib/task-overdue";
 import { taskSchema } from "@/lib/validations";
 
 type Params = { params: Promise<{ id: string }> };
@@ -18,7 +19,7 @@ export async function GET(_request: Request, { params }: Params) {
     with: { volunteers: { with: { user: true } }, location: true },
   });
   if (!item) return NextResponse.json({ error: "Non trouvé" }, { status: 404 });
-  return NextResponse.json(item);
+  return NextResponse.json(withTaskOverdue(item));
 }
 
 export async function PUT(request: Request, { params }: Params) {
@@ -42,19 +43,23 @@ export async function PUT(request: Request, { params }: Params) {
       locationId: data.locationId || null,
       startAt: data.startAt,
       endAt: data.endAt,
+      ...(data.status !== undefined ? { status: data.status } : {}),
+      ...(data.color !== undefined ? { color: data.color } : {}),
     })
     .where(and(eq(tasks.id, id), eq(tasks.festivalId, session!.festivalId)));
 
   await db.delete(taskVolunteers).where(eq(taskVolunteers.taskId, id));
-  await db.insert(taskVolunteers).values(
-    mapTaskVolunteerInserts(id, volunteers),
-  );
+  if (volunteers?.length) {
+    await db.insert(taskVolunteers).values(
+      mapTaskVolunteerInserts(id, volunteers),
+    );
+  }
 
   const updated = await db.query.tasks.findFirst({
     where: eq(tasks.id, id),
     with: { volunteers: { with: { user: true } }, location: true },
   });
-  return NextResponse.json(updated);
+  return NextResponse.json(withTaskOverdue(updated!));
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
