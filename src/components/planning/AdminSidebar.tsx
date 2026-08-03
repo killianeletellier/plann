@@ -14,6 +14,7 @@ import {
   Briefcase,
   Users,
   UserCog,
+  Settings,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,8 +39,25 @@ const navItems = [
   { href: "/admin/export", label: "Export PDF", icon: Download },
 ];
 
+const festivalNavItem = {
+  href: "/admin/festival",
+  label: "Festival",
+  icon: Settings,
+};
+
+function isNavActive(pathname: string, href: string) {
+  return (
+    pathname === href ||
+    (href === "/admin/taches" && pathname.startsWith("/admin/taches")) ||
+    (href === "/admin/festival" && pathname.startsWith("/admin/festival"))
+  );
+}
+
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { href: festivalHref, label: festivalLabel, icon: FestivalIcon } =
+    festivalNavItem;
+  const festivalActive = isNavActive(pathname, festivalHref);
 
   return (
     <aside className="hidden lg:flex flex-col w-56 border-r border-zinc-200 bg-zinc-50 min-h-screen shrink-0">
@@ -48,7 +66,7 @@ export function AdminSidebar() {
       </div>
       <nav className="flex-1 p-2 space-y-1">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href === "/admin/taches" && pathname.startsWith("/admin/taches"));
+          const active = isNavActive(pathname, href);
           return (
             <Link
               key={href}
@@ -66,7 +84,19 @@ export function AdminSidebar() {
           );
         })}
       </nav>
-      <div className="p-2 border-t border-zinc-200">
+      <div className="p-2 border-t border-zinc-200 space-y-1">
+        <Link
+          href={festivalHref}
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors min-h-11",
+            festivalActive
+              ? "bg-zinc-900 text-white"
+              : "text-zinc-700 hover:bg-zinc-200",
+          )}
+        >
+          <FestivalIcon className="h-4 w-4" />
+          {festivalLabel}
+        </Link>
         <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
           <LogOut className="h-4 w-4 mr-2" />
           Déconnexion
@@ -85,7 +115,7 @@ export function AdminMobileNav() {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white">
       <div className="flex justify-around">
         {mobileItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || (href === "/admin/taches" && pathname.startsWith("/admin/taches"));
+          const active = isNavActive(pathname, href);
           return (
             <Link
               key={href}

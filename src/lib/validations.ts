@@ -7,6 +7,25 @@ export const loginSchema = z.object({
   pin: z.string().regex(/^\d{4,6}$/, "PIN de 4 à 6 chiffres"),
 });
 
+const festivalDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Date invalide (AAAA-MM-JJ)");
+
+export const festivalSchema = z
+  .object({
+    name: z.string().min(1, "Nom requis"),
+    code: z
+      .string()
+      .min(1, "Code requis")
+      .regex(/^[A-Za-z0-9_-]+$/, "Lettres, chiffres, tirets et underscores uniquement"),
+    startDate: festivalDateSchema,
+    endDate: festivalDateSchema,
+  })
+  .refine((data) => data.endDate >= data.startDate, {
+    message: "La date de fin doit être après ou égale à la date de début",
+    path: ["endDate"],
+  });
+
 export const locationSchema = z.object({
   name: z.string().min(1, "Nom requis"),
   type: z.enum(["scene", "point_de_vente", "autre"]),
@@ -96,6 +115,7 @@ export const pdfExportSchema = z.object({
   date: z.string().optional(),
 });
 
+export type FestivalInput = z.infer<typeof festivalSchema>;
 export type VolunteerRoleInput = z.infer<typeof volunteerRoleSchema>;
 export type VolunteerAssignmentInput = z.infer<typeof volunteerAssignmentSchema>;
 export type LocationInput = z.infer<typeof locationSchema>;

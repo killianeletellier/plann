@@ -14,10 +14,9 @@ import {
   buildLocationGanttRows,
   buildSceneGanttRows,
   buildVolunteerGanttRows,
-  collectDaysFromIntervals,
   filterGanttRowsByDay,
   formatGanttDayShort,
-  ganttDayRange,
+  ganttFestivalDayRange,
   ganttFilterItems,
   ganttModeLabels,
   GANTT_VIEW_MODES,
@@ -120,32 +119,6 @@ function GanttDaySelector({
   );
 }
 
-function collectAllIntervals(
-  posts: Array<{ slots?: Array<{ startAt: string; endAt: string }> }>,
-  slots: Array<{ startAt: string; endAt: string }>,
-  animations: Array<{ startAt: string; endAt: string }>,
-  tasks: Array<{ startAt: string; endAt: string }>,
-): Array<{ startAt: string; endAt: string }> {
-  const intervals: Array<{ startAt: string; endAt: string }> = [];
-
-  for (const post of posts) {
-    for (const slot of post.slots ?? []) {
-      intervals.push({ startAt: slot.startAt, endAt: slot.endAt });
-    }
-  }
-  for (const slot of slots) {
-    intervals.push({ startAt: slot.startAt, endAt: slot.endAt });
-  }
-  for (const anim of animations) {
-    intervals.push({ startAt: anim.startAt, endAt: anim.endAt });
-  }
-  for (const task of tasks) {
-    intervals.push({ startAt: task.startAt, endAt: task.endAt });
-  }
-
-  return intervals;
-}
-
 function AdminGanttContent() {
   const { toast } = useToast();
   const [exporting, setExporting] = useState(false);
@@ -217,6 +190,10 @@ function AdminGanttContent() {
   const [volunteers, setVolunteers] = useState<
     Array<{ id: string; firstName: string; lastName: string }>
   >([]);
+  const [festivalDates, setFestivalDates] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   const { mode, selectedIds, date, setMode, toggleId, selectAll, setDate } =
@@ -224,7 +201,7 @@ function AdminGanttContent() {
 
   useEffect(() => {
     async function load() {
-      const [postRes, slotRes, animRes, taskRes, locRes, userRes] =
+      const [postRes, slotRes, animRes, taskRes, locRes, userRes, festivalRes] =
         await Promise.all([
           fetch("/api/posts"),
           fetch("/api/slots"),
@@ -232,6 +209,7 @@ function AdminGanttContent() {
           fetch("/api/tasks"),
           fetch("/api/locations"),
           fetch("/api/users"),
+          fetch("/api/festival"),
         ]);
 
       if (postRes.ok) setPosts(await postRes.json());
@@ -240,25 +218,33 @@ function AdminGanttContent() {
       if (taskRes.ok) setTasks(await taskRes.json());
       if (locRes.ok) setLocations(await locRes.json());
       if (userRes.ok) setVolunteers(await userRes.json());
+      if (festivalRes.ok) {
+        const festival = await festivalRes.json();
+        setFestivalDates({
+          startDate: festival.startDate,
+          endDate: festival.endDate,
+        });
+      }
       setLoading(false);
     }
     load();
   }, []);
 
-  const availableDays = useMemo(
-    () => collectDaysFromIntervals(collectAllIntervals(posts, slots, animations, tasks)),
-    [posts, slots, animations, tasks],
+  const dayRange = useMemo(
+    () =>
+      festivalDates
+        ? ganttFestivalDayRange(festivalDates.startDate, festivalDates.endDate)
+        : null,
+    [festivalDates],
   );
 
-  const dayRange = useMemo(() => ganttDayRange(availableDays), [availableDays]);
-
   const effectiveDay = useMemo(
-    () => resolveDefaultGanttDay(availableDays, date),
-    [availableDays, date],
+    () => resolveDefaultGanttDay(date),
+    [date],
   );
 
   useEffect(() => {
-    if (!loading && effectiveDay && effectiveDay !== date) {
+    if (!loading && effectiveDay !== date) {
       setDate(effectiveDay);
     }
   }, [loading, effectiveDay, date, setDate]);
@@ -293,14 +279,14 @@ function AdminGanttContent() {
     return allRows;
   }, [mode, selectedIds, posts, slots, animations, tasks, locations]);
 
-  const dayRows = useMemo(() => {
-    if (!effectiveDay) return [];
-    return filterGanttRowsByDay(rows, effectiveDay);
-  }, [rows, effectiveDay]);
+  const dayRows = useMemo(
+    () => filterGanttRowsByDay(rows, effectiveDay),
+    [rows, effectiveDay],
+  );
 
   const showGroups = mode === "volunteer" && selectedIds.length === 1;
   const canExport =
-    selectedIds.length > 0 && effectiveDay !== null && ganttRowsHaveSlots(dayRows);
+    selectedIds.length > 0 && ganttRowsHaveSlots(dayRows);
 
   const selectedLabels = useMemo(() => {
     const labelById = new Map(filterItems.map((item) => [item.id, item.label]));
@@ -310,7 +296,7 @@ function AdminGanttContent() {
   }, [filterItems, selectedIds]);
 
   async function handleExportPdf() {
-    if (!canExport || !effectiveDay) return;
+    if (!canExport) return;
     setExporting(true);
     try {
       await downloadGanttPdf({
@@ -341,14 +327,12 @@ function AdminGanttContent() {
 
       <GanttModeToggle mode={mode} onModeChange={setMode} />
 
-      {effectiveDay && (
-        <GanttDaySelector
-          day={effectiveDay}
-          minDay={dayRange?.min ?? null}
-          maxDay={dayRange?.max ?? null}
-          onDayChange={setDate}
-        />
-      )}
+      <GanttDaySelector
+        day={effectiveDay}
+        minDay={dayRange?.min ?? null}
+        maxDay={dayRange?.max ?? null}
+        onDayChange={setDate}
+      />
 
       <FilterGrid
         mode={mode === "volunteer" ? "volunteer" : "location"}
@@ -362,8 +346,6 @@ function AdminGanttContent() {
       <div className="rounded-lg border border-zinc-200 bg-white p-4">
         {selectedIds.length === 0 ? (
           <EmptyState message="Sélectionnez un élément ci-dessus pour afficher la timeline." />
-        ) : !effectiveDay ? (
-          <EmptyState message="Aucune mission planifiée pour afficher le Gantt." />
         ) : (
           <div className="space-y-4">
             {canExport && (

@@ -542,22 +542,18 @@ export function formatGanttDayShort(day: GanttDay): string {
   return format(parseISO(day), "EEE d MMM", { locale: fr });
 }
 
-/** Jour par défaut : URL valide, aujourd'hui si dans la plage, sinon le premier jour avec données. */
-export function resolveDefaultGanttDay(
-  availableDays: GanttDay[],
-  urlDate?: string | null,
-): GanttDay | null {
-  if (availableDays.length === 0) {
-    if (urlDate && isValid(parseISO(urlDate))) return urlDate;
-    return null;
-  }
-
+/** Jour affiché : param URL valide, sinon aujourd'hui (date locale). */
+export function resolveDefaultGanttDay(urlDate?: string | null): GanttDay {
   if (urlDate && isValid(parseISO(urlDate))) return urlDate;
+  return format(new Date(), "yyyy-MM-dd");
+}
 
-  const today = format(new Date(), "yyyy-MM-dd");
-  if (availableDays.includes(today)) return today;
-
-  return availableDays[0]!;
+/** Bornes de navigation du Gantt à partir des dates officielles du festival. */
+export function ganttFestivalDayRange(
+  startDate: string,
+  endDate: string,
+): { min: GanttDay; max: GanttDay } {
+  return { min: startDate, max: endDate };
 }
 
 export interface GanttDayTimeRange {

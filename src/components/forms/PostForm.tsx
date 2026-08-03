@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,13 +117,27 @@ export function SlotGenerator({ postId, onGenerated }: SlotGeneratorProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    startDate: "2026-07-10",
-    endDate: "2026-07-13",
+    startDate: "",
+    endDate: "",
     dailyStartTime: "10:00",
     dailyEndTime: "22:00",
     slotDurationMinutes: 120,
     days: [5, 6, 0] as number[],
   });
+
+  useEffect(() => {
+    async function loadFestivalDates() {
+      const res = await fetch("/api/festival");
+      if (!res.ok) return;
+      const festival = await res.json();
+      setForm((current) => ({
+        ...current,
+        startDate: festival.startDate,
+        endDate: festival.endDate,
+      }));
+    }
+    loadFestivalDates();
+  }, []);
 
   function toggleDay(day: number) {
     setForm((f) => ({

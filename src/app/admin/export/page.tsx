@@ -30,14 +30,15 @@ export default function ExportPage() {
   const [type, setType] = useState<"location" | "volunteer">("location");
   const [scope, setScope] = useState<"day" | "global">("global");
   const [targetId, setTargetId] = useState("");
-  const [date, setDate] = useState("2026-07-11");
+  const [date, setDate] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
-      const [locRes, userRes] = await Promise.all([
+      const [locRes, userRes, festivalRes] = await Promise.all([
         fetch("/api/locations"),
         fetch("/api/users"),
+        fetch("/api/festival"),
       ]);
       if (locRes.ok) {
         const locs = await locRes.json();
@@ -50,6 +51,10 @@ export default function ExportPage() {
           id: x.id,
           label: `${x.firstName} ${x.lastName}`,
         })));
+      }
+      if (festivalRes.ok) {
+        const festival = await festivalRes.json();
+        setDate(festival.startDate);
       }
     }
     load();
